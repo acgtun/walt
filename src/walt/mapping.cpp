@@ -194,7 +194,8 @@ void IndexRegion(const string& read, const Genome& genome,
 
 void SingleEndMapping(const string& org_read, const Genome& genome,
                       const HashTable& hash_table, const char& strand,
-                      const bool& AG_WILDCARD, BestMatch& best_match) {
+                      const bool& AG_WILDCARD, BestMatch& best_match,
+                      StatSingleReads& stat_single_reads) {
   uint32_t read_len = org_read.size();
   if (read_len < MINIMALREADLEN) {
     return;
@@ -239,9 +240,14 @@ void SingleEndMapping(const string& org_read, const Genome& genome,
       continue;
 
     IndexRegion(read_seed, genome, hash_table, seed_len, region);
-    if (region.second - region.first + 1 > 50000) {
+    if (region.first > region.second
+        || region.second - region.first + 1 > 5000) {
       continue;
     }
+
+    // count the number of seeds go to a particular buckets size
+    stat_single_reads.seeds_in_bucket_size[region.second - region.first + 1]++;
+
     for (uint32_t j = region.first; j <= region.second; ++j) {
       uint32_t genome_pos = hash_table.index[j];
       uint32_t chr_id = getChromID(genome.start_index, genome_pos);
@@ -270,11 +276,13 @@ void SingleEndMapping(const string& org_read, const Genome& genome,
       }
 
       if (num_of_mismatch < best_match.mismatch) {
-        best_match = BestMatch(genome_pos, 1, strand, num_of_mismatch);
+        best_match = BestMatch(genome_pos, 1, strand, num_of_mismatch,
+                               region.second - region.first + 1);
       } else if (best_match.mismatch == num_of_mismatch
           && best_match.genome_pos != genome_pos) {
         best_match.genome_pos = genome_pos;
         best_match.strand = strand;
+        best_match.bucket_size = region.second - region.first + 1;
         best_match.times++;
       }
     }
@@ -452,13 +460,17 @@ void ProcessSingledEndReads(const string& command, const string& index_file,
 #pragma omp parallel for
       for (uint32_t j = 0; j < num_of_reads; ++j) {
         SingleEndMapping(read_seqs[j], genome, hash_table, strand, AG_WILDCARD,
-                         map_results[j]);
+                         map_results[j], stat_single_reads);
       }
     }
     //////////////////////////////////////////////////////////
     // Output
     for (uint32_t j = 0; j < num_of_reads; ++j) {
       StatInfoUpdate(map_results[j].times, stat_single_reads);
+      if (map_results[j].times == 1) {
+        stat_single_reads.seeds_in_bucket_size_uniquely_mapped[map_results[j]
+            .bucket_size]++;
+      }
       if (!SAM) {
         OutputSingleResults(map_results[j], read_names[j], read_seqs[j],
                             read_scores[j], genome, AG_WILDCARD,
@@ -475,29 +487,44 @@ void ProcessSingledEndReads(const string& command, const string& index_file,
   fclose(fin);
   fclose(fout);
 
-  freopen(string(output_file + ".mapstats").c_str(), "w", stdout);
-  fprintf(stdout, "[TOTAL NUMBER OF READS: %u]\n",
+  FILE * fstat = fopen(string(output_file + ".mapstats").c_str(), "w");
+  fprintf(fstat, "[TOTAL NUMBER OF READS: %u]\n",
           stat_single_reads.total_reads);
   fprintf(
-      stdout,
+      fstat,
       "[UNIQUELY MAPPED READS: %u (%.2lf%%)]\n",
       stat_single_reads.unique_mapped_reads,
       100.00 * stat_single_reads.unique_mapped_reads
           / stat_single_reads.total_reads);
   fprintf(
-      stdout,
+      fstat,
       "[AMBIGUOUS MAPPED READS: %u (%.2lf%%)]\n",
       stat_single_reads.ambiguous_mapped_reads,
       100.00 * stat_single_reads.ambiguous_mapped_reads
           / stat_single_reads.total_reads);
   fprintf(
-      stdout,
+      fstat,
       "[UNMAPPED READS: %u (%.2lf%%)]\n",
       stat_single_reads.unmapped_reads,
       100.00 * stat_single_reads.unmapped_reads
           / stat_single_reads.total_reads);
+  fclose(fstat);
 
   fprintf(stderr, "[MAPPING TAKES %.0lf SECONDS]\n",
           (double(clock() - start_t) / CLOCKS_PER_SEC));
-  fclose (stdout);
+
+  FILE * fcount = fopen(string(output_file + ".count_bucket_size").c_str(),
+                        "w");
+  for (uint32_t i = 0; i <= 50000; ++i) {
+    fprintf(fcount, "%u %u\n", i, stat_single_reads.seeds_in_bucket_size[i]);
+  }
+  fclose(fcount);
+
+  FILE * fumcount = fopen(
+      string(output_file + ".count_bucket_size_uniquely_mapped").c_str(), "w");
+  for (uint32_t i = 0; i <= 50000; ++i) {
+    fprintf(fumcount, "%u %u\n", i,
+            stat_single_reads.seeds_in_bucket_size_uniquely_mapped[i]);
+  }
+  fclose(fumcount);
 }

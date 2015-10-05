@@ -69,7 +69,8 @@ void ForwardChromPosition(const uint32_t& genome_pos, const char& strand,
 void PairEndMapping(const string& org_read, const Genome& genome,
                     const HashTable& hash_table, const char& strand,
                     const bool& AG_WILDCARD, const uint32_t& max_mismatches,
-                    TopCandidates& top_match) {
+                    TopCandidates& top_match,
+                    StatPairedReads& stat_paired_reads, const uint32_t& pi) {
   uint32_t read_len = org_read.size();
   if (read_len < MINIMALREADLEN) {
     return;
@@ -118,9 +119,20 @@ void PairEndMapping(const string& org_read, const Genome& genome,
       continue;
 
     IndexRegion(read_seed, genome, hash_table, seed_len, region);
-    if (region.second - region.first + 1 > 50000) {
+    if (region.first > region.second
+        || region.second - region.first + 1 > 5000) {
       continue;
     }
+
+    // count the number of seeds go to a particular buckets size
+    if (pi == 0) {
+      stat_paired_reads.stat_single_reads_1.seeds_in_bucket_size[region.second
+          - region.first + 1]++;
+    } else {
+      stat_paired_reads.stat_single_reads_2.seeds_in_bucket_size[region.second
+          - region.first + 1]++;
+    }
+
     for (uint32_t j = region.first; j <= region.second; ++j) {
       uint32_t genome_pos = hash_table.index[j];
       uint32_t chr_id = getChromID(genome.start_index, genome_pos);
@@ -151,7 +163,9 @@ void PairEndMapping(const string& org_read, const Genome& genome,
       if (num_of_mismatch > max_mismatches) {
         continue;
       }
-      top_match.Push(CandidatePosition(genome_pos, strand, num_of_mismatch));
+      top_match.Push(
+          CandidatePosition(genome_pos, strand, num_of_mismatch,
+                            region.second - region.first + 1));
       if (top_match.Full()) {
         cur_max_mismatches = top_match.Top().mismatch;
       }
@@ -161,66 +175,107 @@ void PairEndMapping(const string& org_read, const Genome& genome,
 
 void OutputPairedStatInfo(const StatPairedReads& stat_paired_reads,
                           const string& output_file) {
-  freopen(string(output_file + ".mapstats").c_str(), "w", stdout);
-  fprintf(stdout, "[TOTAL NUMBER OF READ PAIRS: %u]\n",
+  FILE * fstat = fopen(string(output_file + ".mapstats").c_str(), "w");
+  fprintf(fstat, "[TOTAL NUMBER OF READ PAIRS: %u]\n",
           stat_paired_reads.total_read_pairs);
   fprintf(
-      stdout,
+      fstat,
       "[UNIQUELY MAPPED READ PAIRS: %u (%.2lf%%)]\n",
       stat_paired_reads.unique_mapped_pairs,
       100.00 * stat_paired_reads.unique_mapped_pairs
           / stat_paired_reads.total_read_pairs);
   fprintf(
-      stdout,
+      fstat,
       "[AMBIGUOUS MAPPED READ PAIRS: %u (%.2lf%%)]\n",
       stat_paired_reads.ambiguous_mapped_pairs,
       100.00 * stat_paired_reads.ambiguous_mapped_pairs
           / stat_paired_reads.total_read_pairs);
   fprintf(
-      stdout,
+      fstat,
       "[UNMAPPED READS PAIRS: %u (%.2lf%%)]\n",
       stat_paired_reads.unmapped_pairs,
       100.00 * stat_paired_reads.unmapped_pairs
           / stat_paired_reads.total_read_pairs);
   //////////////////MATE 1////////////////////////
   fprintf(
-      stdout,
+      fstat,
       "   [UNIQUELY MAPPED READS IN MATE_1: %u (%.2lf%%)]\n",
       stat_paired_reads.stat_single_reads_1.unique_mapped_reads,
       100.00 * stat_paired_reads.stat_single_reads_1.unique_mapped_reads
           / stat_paired_reads.total_read_pairs);
   fprintf(
-      stdout,
+      fstat,
       "   [AMBIGUOUS MAPPED READS IN MATE_1: %u (%.2lf%%)]\n",
       stat_paired_reads.stat_single_reads_1.ambiguous_mapped_reads,
       100.00 * stat_paired_reads.stat_single_reads_1.ambiguous_mapped_reads
           / stat_paired_reads.total_read_pairs);
   fprintf(
-      stdout,
+      fstat,
       "   [UNMAPPED READS IN MATE_1: %u (%.2lf%%)]\n",
       stat_paired_reads.stat_single_reads_1.unmapped_reads,
       100.00 * stat_paired_reads.stat_single_reads_1.unmapped_reads
           / stat_paired_reads.total_read_pairs);
   //////////////////MATE 2////////////////////////
   fprintf(
-      stdout,
+      fstat,
       "   [UNIQUELY MAPPED READS IN MATE_2: %u (%.2lf%%)]\n",
       stat_paired_reads.stat_single_reads_2.unique_mapped_reads,
       100.00 * stat_paired_reads.stat_single_reads_2.unique_mapped_reads
           / stat_paired_reads.total_read_pairs);
   fprintf(
-      stdout,
+      fstat,
       "   [AMBIGUOUS MAPPED READS IN MATE_2: %u (%.2lf%%)]\n",
       stat_paired_reads.stat_single_reads_2.ambiguous_mapped_reads,
       100.00 * stat_paired_reads.stat_single_reads_2.ambiguous_mapped_reads
           / stat_paired_reads.total_read_pairs);
   fprintf(
-      stdout,
+      fstat,
       "   [UNMAPPED READS IN MATE_2: %u (%.2lf%%)]\n",
       stat_paired_reads.stat_single_reads_2.unmapped_reads,
       100.00 * stat_paired_reads.stat_single_reads_2.unmapped_reads
           / stat_paired_reads.total_read_pairs);
-  fclose (stdout);
+  fclose(fstat);
+
+  FILE * fcount1 = fopen(string(output_file + ".count_bucket_size1").c_str(),
+                         "w");
+  for (uint32_t i = 0; i <= 50000; ++i) {
+    fprintf(fcount1, "%u %u\n", i,
+            stat_paired_reads.stat_single_reads_1.seeds_in_bucket_size[i]);
+  }
+  fclose(fcount1);
+
+  FILE * fcount2 = fopen(string(output_file + ".count_bucket_size2").c_str(),
+                         "w");
+  for (uint32_t i = 0; i <= 50000; ++i) {
+    fprintf(fcount2, "%u %u\n", i,
+            stat_paired_reads.stat_single_reads_2.seeds_in_bucket_size[i]);
+  }
+  fclose(fcount2);
+
+  ////////////////////////////
+  FILE * fumcount1 = fopen(
+      string(output_file + ".count_bucket_size_uniquely_mapped1").c_str(), "w");
+  for (uint32_t i = 0; i <= 50000; ++i) {
+    fprintf(
+        fumcount1,
+        "%u %u\n",
+        i,
+        stat_paired_reads.stat_single_reads_1
+            .seeds_in_bucket_size_uniquely_mapped[i]);
+  }
+  fclose(fumcount1);
+
+  FILE * fumcount2 = fopen(
+      string(output_file + ".count_bucket_size_uniquely_mapped2").c_str(), "w");
+  for (uint32_t i = 0; i <= 50000; ++i) {
+    fprintf(
+        fumcount2,
+        "%u %u\n",
+        i,
+        stat_paired_reads.stat_single_reads_2
+            .seeds_in_bucket_size_uniquely_mapped[i]);
+  }
+  fclose(fumcount2);
 }
 
 int OutputBestPairedResults(const CandidatePosition& r1,
@@ -531,6 +586,7 @@ void MergePairedEndResults(
   BestMatch best_match_2(0, 0, '+', max_mismatches);
   bool is_paired_mapped = false;
   int len = 0;
+
   if (best_times == 1) {
     stat_paired_reads.unique_mapped_pairs++;
     len = OutputBestPairedResults(ranked_results[0][best_pair.first],
@@ -538,6 +594,10 @@ void MergePairedEndResults(
                                   frag_range, read_len1, read_len2, genome,
                                   read_name, read_seq1, read_score1, read_seq2,
                                   read_score2, SAM, fout);
+    stat_paired_reads.stat_single_reads_1.seeds_in_bucket_size_uniquely_mapped[ranked_results[0][best_pair
+        .first].bucket_size]++;
+    stat_paired_reads.stat_single_reads_2.seeds_in_bucket_size_uniquely_mapped[ranked_results[1][best_pair
+        .second].bucket_size]++;
     if (SAM) {  // SAM
       is_paired_mapped = true;
       const CandidatePosition& r1 = ranked_results[0][best_pair.first];
@@ -551,6 +611,7 @@ void MergePairedEndResults(
     } else {
       stat_paired_reads.unmapped_pairs++;
     }
+
     GetBestMatch4Single(ranked_results[0], ranked_results_size[0], genome,
                         read_len1, read_name, read_seq1, read_score1,
                         max_mismatches, best_match_1);
@@ -671,7 +732,8 @@ void ProcessPairedEndReads(const string& command, const string& index_file,
 #pragma omp parallel for
         for (uint32_t j = 0; j < num_of_reads[pi]; ++j) {
           PairEndMapping(read_seqs[pi][j], genome, hash_table, strand,
-                         AG_WILDCARD, max_mismatches, top_results[pi][j]);
+                         AG_WILDCARD, max_mismatches, top_results[pi][j],
+                         stat_paired_reads, pi);
         }
       }
     }

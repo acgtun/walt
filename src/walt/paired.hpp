@@ -35,10 +35,12 @@
  * mismatches less or equal to max_mismatches */
 struct CandidatePosition {
   CandidatePosition(const uint32_t& _genome_pos = 0, const char& _strand = '+',
-                    const uint32_t& _mismatch = MAX_UINT32)
+                    const uint32_t& _mismatch = MAX_UINT32,
+                    const uint32_t& _bucket_size = MAX_UINT32)
       : genome_pos(_genome_pos),
         strand(_strand),
-        mismatch(_mismatch) {
+        mismatch(_mismatch),
+        bucket_size(_bucket_size) {
   }
 
   bool operator<(const CandidatePosition& b) const {
@@ -48,6 +50,7 @@ struct CandidatePosition {
   uint32_t genome_pos;
   char strand;
   uint32_t mismatch;
+  uint32_t bucket_size;
 };
 
 /* TopCandidates is a priority_queue which stores the top-k candidate

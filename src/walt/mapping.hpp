@@ -38,17 +38,20 @@
  * number of mismatches. */
 struct BestMatch {
   BestMatch(const uint32_t& _genome_pos = 0, const uint32_t& _times = 0,
-            const char& _strand = '+', const uint32_t& _mismatch = MAX_UINT32)
+            const char& _strand = '+', const uint32_t& _mismatch = MAX_UINT32,
+            const uint32_t& _bucket_size = MAX_UINT32)
       : genome_pos(_genome_pos),
         times(_times),
         strand(_strand),
-        mismatch(_mismatch) {
+        mismatch(_mismatch),
+        bucket_size(_bucket_size) {
   }
 
   uint32_t genome_pos;
   uint32_t times;
   char strand;
   uint32_t mismatch;
+  uint32_t bucket_size;
 };
 
 /* count the number of uniquely mapped, ambiguous mapped and unmapped reads */
@@ -57,7 +60,9 @@ struct StatSingleReads {
                   const string& output_file, const bool& _SAM)
       : ambiguous(_ambiguous),
         unmapped(_unmapped),
-        SAM(_SAM) {
+        SAM(_SAM),
+        seeds_in_bucket_size(50005, 0),
+        seeds_in_bucket_size_uniquely_mapped(50005, 0) {
     total_reads = 0;
     unique_mapped_reads = 0;
     ambiguous_mapped_reads = 0;
@@ -98,6 +103,9 @@ struct StatSingleReads {
   bool ambiguous;
   bool unmapped;
   bool SAM;
+
+  vector<uint32_t> seeds_in_bucket_size;
+  vector<uint32_t> seeds_in_bucket_size_uniquely_mapped;
 };
 
 /* load reads from reads file, each time load n_reads_to_process reads,
