@@ -354,8 +354,8 @@ const uint32_t F2NOCAREDPOSITION[5][90] = {
 #define SEEPATTERNLEN 3
 #define SEEPATTERNCAREDWEIGHT 1
 #define SEEPATTERNNOCAREDWEIGHT 2
-#define MINIMALREADLEN 39
-const uint32_t F2SEEDKEYWIGTH = 13;
+#define MINIMALREADLEN 78
+const uint32_t F2SEEDKEYWIGTH = 26;
 const uint32_t F2SEEDPATTERN[] = {
      /* 1 */0, 1, 0,  //
      /* 2 */0, 1, 0,  //
@@ -425,6 +425,7 @@ const uint32_t F2CAREDPOSITION[] = {  1,   4,   7,  10,  13,  16,  19,  22,  25,
                                      91,  94,  97, 100, 103, 106, 109, 112, 115, 118,
                                     121, 124, 127, 130, 133, 136, 139, 142, 145, 148,
                                     151, 154, 157, 160, 163, 166, 169, 172, 175, 178 };
+/*
 const uint32_t F2NOCAREDPOSITION[3][150] = {
                             {  0,   2,   3,   5,   6,   8,   9,
                               11,  12,  14,  15,  17,  18,
@@ -450,6 +451,7 @@ const uint32_t F2NOCAREDPOSITION[3][150] = {
                              112, 113, 115, 116, 118, 119, 121, 122, 124, 125, 127, 128, 130, 131, 133, 134, 136, 137, 139, 140,
                              141, 143, 145, 146, 148, 149, 151, 152, 154, 155, 157, 158, 160, 161, 163, 164, 166, 167, 169, 170,
                              171, 173, 175, 176, 178, 179, 181 }};
+                             */
 #endif
 
 #endif /* SRC_WALT_SEEDPATTERN_HPP_ */

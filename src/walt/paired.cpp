@@ -144,7 +144,14 @@ void PairEndMapping(const string& org_read, const Genome& genome,
 
       /* check the position */
       uint32_t num_of_mismatch = 0;
-      uint32_t num_of_nocared = seed_pattern_repeats * SEEPATTERNNOCAREDWEIGHT
+      for (uint32_t q = genome_pos, p = 0;
+          p < read_len && num_of_mismatch <= cur_max_mismatches; ++q, ++p) {
+        if (genome.sequence[q] != read[p]) {
+          num_of_mismatch++;
+        }
+      }
+
+      /*uint32_t num_of_nocared = seed_pattern_repeats * SEEPATTERNNOCAREDWEIGHT
           + seed_i;
       for (uint32_t p = 0;
           p < num_of_nocared && num_of_mismatch <= cur_max_mismatches; ++p) {
@@ -159,6 +166,7 @@ void PairEndMapping(const string& org_read, const Genome& genome,
           num_of_mismatch++;
         }
       }
+      */
 
       if (num_of_mismatch > max_mismatches) {
         continue;
@@ -661,7 +669,7 @@ void ProcessPairedEndReads(const string& command, const string& index_file,
   uint32_t size_of_index;
   ReadIndexHeadInfo(index_file, genome, size_of_index);
   genome.sequence.resize(genome.length_of_genome);
-  hash_table.counter.resize(power(4, F2SEEDKEYWIGTH) + 1);
+  hash_table.counter.resize(power(2, F2SEEDKEYWIGTH) + 1);
   hash_table.index.resize(size_of_index);
 
   vector<vector<string> > index_names(2, vector<string>(2));

@@ -189,7 +189,7 @@ void TestHashTable(const Genome& genome, const HashTable& hash_table) {
 void CountBucketSize(const Genome& genome, HashTable& hash_table,
                      set<uint32_t>& extremal_large_bucket) {
   fprintf(stderr, "[COUNT BUCKET SIZE]\n");
-  hash_table.counter_size = power(4, F2SEEDKEYWIGTH);
+  hash_table.counter_size = power(2, F2SEEDKEYWIGTH);
   hash_table.counter.resize(hash_table.counter_size + 1, 0);
 
   uint32_t size = 0, hash_value = 0;

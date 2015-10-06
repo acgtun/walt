@@ -108,9 +108,9 @@ inline uint32_t getBits(const char& nt) {
     case 'C':
       return 1;
     case 'G':
-      return 2;
+      return 0;
     case 'T':
-      return 3;
+      return 1;
   }
   return 4;
 }
@@ -151,8 +151,8 @@ inline uint32_t power(const uint32_t& x, const uint32_t& p) {
 /* transfer a k-mer to a integer number and use it as a key in the hash table */
 inline uint32_t getHashValue(const char* nucleotides) {
   uint32_t hash_value = 0;
-  for (uint32_t i = 0; i < F2SEEDKEYWIGTH; ++i) {
-    hash_value <<= 2;
+  for (uint32_t i = 0; i < 26; ++i) {
+    hash_value <<= 1;
     hash_value += getBits(nucleotides[F2CAREDPOSITION[i]]);
   }
   return hash_value;
