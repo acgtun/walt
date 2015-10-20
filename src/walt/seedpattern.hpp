@@ -30,8 +30,8 @@
 #define SEEPATTERNLEN 7
 #define SEEPATTERNCAREDWEIGHT 4
 #define SEEPATTERNNOCAREDWEIGHT 3
-#define MINIMALREADLEN 21
-const uint32_t F2SEEDKEYWIGTH = 12;
+#define MINIMALREADLEN 42
+const uint32_t F2SEEDKEYWIGTH = 24;
 const uint32_t F2SEEDPATTERN[] = {
      /* 1 */1, 1, 1, 0, 1, 0, 0,  //
      /* 2 */1, 1, 1, 0, 1, 0, 0,  //
@@ -76,7 +76,7 @@ const uint32_t F2CAREDPOSITION[] = {
     /* 17 */112, 113, 114, 116,  //
     /* 18 */119, 120, 121, 123,  //
     /* 19 */126, 127, 128, 130,  //
-    /* 20 */133, 134, 135, 137 //
+    /* 20 */133, 134, 135, 137   //
     };
 const uint32_t F2NOCAREDPOSITION[7][70] = {
                      /* 0 */ { 3,   5,   6,
@@ -226,8 +226,8 @@ const uint32_t F2NOCAREDPOSITION[7][70] = {
 #define SEEPATTERNLEN 5
 #define SEEPATTERNCAREDWEIGHT 2
 #define SEEPATTERNNOCAREDWEIGHT 3
-#define MINIMALREADLEN 30
-const uint32_t F2SEEDKEYWIGTH = 12;
+#define MINIMALREADLEN 65
+const uint32_t F2SEEDKEYWIGTH = 26;
 const uint32_t F2SEEDPATTERN[] = {
      /* 1 */1, 0, 1, 0, 0,  //
      /* 2 */1, 0, 1, 0, 0,  //

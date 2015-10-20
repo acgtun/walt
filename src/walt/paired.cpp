@@ -120,7 +120,7 @@ void PairEndMapping(const string& org_read, const Genome& genome,
 
     IndexRegion(read_seed, genome, hash_table, seed_len, region);
     if (region.first > region.second
-        || region.second - region.first + 1 > 5000) {
+        || region.second - region.first + 1 > 50000) {
       continue;
     }
 

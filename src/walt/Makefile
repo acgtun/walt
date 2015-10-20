@@ -31,7 +31,7 @@ endif
 PROGS = makedb walt
 
 CXX = g++
-CFLAGS = -Wall -O3 -fPIC -fmessage-length=50 -fopenmp -D SEEDPATTERN3
+CFLAGS = -Wall -O3 -fPIC -fmessage-length=50 -fopenmp -D SEEDPATTERN7
 
 TEST_DIR = $(SRC_ROOT)/test
 
