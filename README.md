@@ -1,4 +1,4 @@
-<img src="https://github.com/acgtun/walt/blob/master/image/walt.png" width="30">  ## WALT v1.0 ##
+## WALT v1.0 <img src="https://github.com/acgtun/walt/blob/master/image/walt.png" width="40">
 
 ***WALT*** (Wildcard ALignment Tool) is a read mapping program for bisulfite sequencing in DNA methylation studies.
 
