@@ -109,7 +109,9 @@ void ReadGenome(const vector<string>& chrom_files, Genome& genome) {
     genome.start_index[i] = k;
 
     for (uint32_t j = 0; j < chrom_seqs[i].size(); ++j) {
-      genome.sequence[k++] = toupper(chrom_seqs[i][j]);
+      genome.sequence[k] = toupper(chrom_seqs[i][j]);
+      genome.sequence[k] = toACGT(genome.sequence[k]);
+      k++;
     }
   }
   genome.start_index[genome.num_of_chroms] = k;
